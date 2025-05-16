@@ -42,6 +42,13 @@ class ZyTemp():
             'ha_device_class': 'carbon_dioxide',
             'ha_icon': 'mdi:molecule-co2',
         },
+        0x41: {
+            'name': 'Humidity',
+            'unit': '%',
+            'conversion': lambda x: x / 100,
+            'ha_device_class': 'humidity',
+            'ha_icon': 'mdi:water-percent',
+        },
     }
 
     def __init__(self, hiddev, mqtt):
@@ -89,6 +96,7 @@ class ZyTemp():
                 'device_class': meas['ha_device_class'],
                 'name': ' '.join((self.cfg.friendly_name, meas['name'])),
                 'state_topic': self.cfg.mqtt_topic,
+                'availability_topic': self.cfg.availability_topic,
                 'unique_id': '_'.join((id, meas['name'])),
                 'unit_of_measurement': meas['unit'],
                 'value_template': '{{ value_json.%s }}' % meas['name'],
@@ -128,7 +136,7 @@ class ZyTemp():
         while True:
             self.discovery()
             try:
-                r = self.h.read(8)
+                r = self.h.read(8, timeout_ms = 60 * 1000)
             except OSError as err:
                 l.log(log.ERROR, f'OS error: {err}')
                 return
